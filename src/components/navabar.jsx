@@ -21,7 +21,7 @@ function Navbar() {
       <div className="flex justify-between items-center">
         {/* Logo & App Name */}
         <div className="flex items-center gap-2">
-          <img src="/logo.JPG" alt="logo" className="w-8 h-8 rounded-full" />
+          <img src="/logo.jpg" alt="logo" className="w-8 h-8 rounded-full" />
           <div className="text-lg font-bold">Focus Deck</div>
         </div>
 
