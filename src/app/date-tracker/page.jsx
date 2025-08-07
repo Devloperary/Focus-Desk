@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
-export default function Page() {
+export default function DailyTasksPage() {
   const [daytasks, setDaytasks] = useState([]);
   const [input, setInput] = useState("");
   const [date, setDate] = useState(new Date());
@@ -11,11 +11,11 @@ export default function Page() {
 
   const loadTasks = async () => {
     try {
-      const res = await fetch(`/api/tasks?date=${date.toDateString()}`);
+      const res = await fetch(`/api/daily-tasks?date=${date.toDateString()}`);
       const data = await res.json();
       setDaytasks(data);
     } catch (err) {
-      console.error("Failed to fetch tasks", err);
+      console.error("Failed to fetch daily tasks", err);
     }
   };
 
@@ -27,10 +27,10 @@ export default function Page() {
     if (!input.trim()) return;
 
     const payload = editingTaskId
-      ? { id: editingTaskId, title: input }
+      ? { id: editingTaskId, title: input, date: date.toDateString() }
       : { title: input, date: date.toDateString() };
 
-    await fetch("/api/tasks", {
+    await fetch("/api/daily-tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -47,7 +47,7 @@ export default function Page() {
   };
 
   const handleDelete = async (id) => {
-    await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+    await fetch(`/api/daily-tasks?id=${id}`, { method: "DELETE" });
     loadTasks();
   };
 
@@ -62,7 +62,7 @@ export default function Page() {
 
       <div className="bg-[#1c1c1c] flex-1 rounded-2xl p-4">
         <div className="flex flex-wrap items-center gap-3 mb-3">
-          <h2 className="text-2xl font-bold text-[#facc15]">Tasks for:</h2>
+          <h2 className="text-2xl font-bold text-[#facc15]">Daily Tasks for:</h2>
           <h3 className="text-xl font-semibold text-gray-300">
             {date?.toDateString()}
           </h3>
@@ -72,7 +72,7 @@ export default function Page() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Enter a task..."
+            placeholder="Enter a daily task..."
             className="flex-1 px-4 py-2 rounded-md bg-gray-900 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#facc15]"
           />
           <button
@@ -110,7 +110,7 @@ export default function Page() {
 
           {daytasks.length === 0 && (
             <p className="text-center text-gray-500 mt-4">
-              No tasks for this day.
+              No daily tasks for this day.
             </p>
           )}
         </div>

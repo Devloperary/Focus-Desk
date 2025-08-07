@@ -1,41 +1,63 @@
-// app/api/tasks/route.js
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongo";
-import { v4 as uuidv4 } from "uuid";
+import { connectDB } from "@/lib/mongodb";
+import Task from "@/models/Task";
 
-export async function GET(request) {
-  const client = await clientPromise;
-  const db = client.db("task-manager");
-  const date = request.nextUrl.searchParams.get("date");
+// ✅ GET: Fetch tasks
+export async function GET(req) {
+  try {
+    await connectDB();
 
-  // Fetch both exact-date tasks and global scheduled tasks
-  const tasks = await db
-    .collection("tasks")
-    .find({ $or: [{ date }, { date: "global" }] })
-    .toArray();
+    const { searchParams } = new URL(req.url);
+    const date = searchParams.get("date");
+    const status = searchParams.get("status");
 
-  return NextResponse.json(tasks);
+    const query = {};
+    if (date) query.date = date;
+    if (status) query.status = status;
+
+    const tasks = await Task.find(query).sort({ _id: -1 });
+    return NextResponse.json(tasks);
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
+  }
 }
 
-export async function POST(request) {
-  const client = await clientPromise;
-  const db = client.db("task-manager");
-  const body = await request.json();
+// ✅ POST: Add or Update Task
+export async function POST(req) {
+  try {
+    await connectDB();
+    const { id, title, status, date } = await req.json();
 
-  const { id, title, date } = body;
+    if (id) {
+      await Task.findByIdAndUpdate(id, { title, status, date });
+    } else {
+      await Task.create({ title, status, date });
+    }
 
-  if (id) {
-    // Update title
-    await db.collection("tasks").updateOne({ id }, { $set: { title } });
-  } else {
-    // Add new task
-    await db.collection("tasks").insertOne({
-      id: uuidv4(),
-      title,
-      date: date || "global",
-      status: "Scheduled",
-    });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to save task" }, { status: 500 });
   }
- 
-  return NextResponse.json({ message: "Success" });
+}
+
+// ✅ DELETE: Remove Task
+export async function DELETE(req) {
+  try {
+    await connectDB();
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing task ID" }, { status: 400 });
+    }
+
+    await Task.findByIdAndDelete(id);
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to delete task" }, { status: 500 });
+  }
 }

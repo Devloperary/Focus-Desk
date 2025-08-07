@@ -10,7 +10,6 @@ function Navbar() {
   const [showInput, setShowInput] = useState(false);
 
   const navLinks = [
-    { label: "Home", href: "/home" },
     { label: "Task Manager", href: "/task-manager" },
     { label: "Date Tracker", href: "/date-tracker" },
     { label: "Goal Tracker", href: "/goal-tracker" },

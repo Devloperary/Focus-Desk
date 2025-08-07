@@ -3,57 +3,55 @@ import React, { useEffect, useState } from "react";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
 const tabs = ["All Tasks", "Pending", "In Progress", "Completed", "Scheduled"];
+const statuses = ["Pending", "In Progress", "Completed", "Scheduled"];
 
 export default function Page() {
-  const [daytasks, setDaytasks] = useState([]);
-  const [active, setActive] = useState("All Tasks");
   const [tasks, setTasks] = useState([]);
+  const [active, setActive] = useState("All Tasks");
   const [input, setInput] = useState("");
   const [editingTaskId, setEditingTaskId] = useState(null);
-  const [date, setDate] = useState(new Date());
-  const [editinTaskId, setEditinTaskId] = useState(null);
-
   const today = new Date().toDateString();
 
-  const dayLoadTasks = async () => {
-    try {
-      const res = await fetch(`/api/tasks?date=${date.toDateString()}`);
-      const data = await res.json();
-      setDaytasks(data);
-    } catch (err) {
-      console.error("Failed to fetch tasks", err);
-    }
-  };
-
   const loadTasks = async () => {
-    const res = await fetch(`/api/daily-tasks?date=${today}`);
-    const data = await res.json();
-    setTasks(data);
+    try {
+      const res = await fetch(`/api/daily-tasks?date=${today}`);
+      if (!res.ok) throw new Error("Failed to fetch daily tasks");
+
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : [];
+      setTasks(data);
+    } catch (err) {
+      console.error(err);
+      setTasks([]);
+    }
   };
 
   useEffect(() => {
     loadTasks();
-    dayLoadTasks();
   }, []);
 
   const handleAdd = async () => {
     if (!input.trim()) return;
 
-    const res = await fetch(`/api/daily-tasks`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: editingTaskId || undefined,
-        title: input,
-        status: "Pending",
-        date: today,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/daily-tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingTaskId || undefined,
+          title: input,
+          status: "Pending",
+          date: today,
+        }),
+      });
 
-    if (res.ok) {
-      loadTasks();
-      setInput("");
-      setEditingTaskId(null);
+      if (res.ok) {
+        loadTasks();
+        setInput("");
+        setEditingTaskId(null);
+      }
+    } catch (err) {
+      console.error("Failed to add/update daily task", err);
     }
   };
 
@@ -62,32 +60,33 @@ export default function Page() {
     setInput(title);
   };
 
-  const handlDelete = async (id) => {
-    await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-    dayLoadTasks();
-  };
-
   const handleDelete = async (id) => {
-    await fetch(`/api/daily-tasks/${id}`, { method: "DELETE" });
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+    try {
+      await fetch(`/api/daily-tasks?id=${id}`, { method: "DELETE" });
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+    } catch (err) {
+      console.error("Failed to delete daily task", err);
+    }
   };
 
   const handleStatusChange = async (id, status) => {
-    await fetch(`/api/daily-tasks`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status }),
-    });
+    try {
+      await fetch(`/api/daily-tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status, date: today }),
+      });
 
-    setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, status } : task))
-    );
+      setTasks((prev) =>
+        prev.map((task) => (task.id === id ? { ...task, status } : task))
+      );
+    } catch (err) {
+      console.error("Failed to update daily task status", err);
+    }
   };
 
   const filteredTasks =
     active === "All Tasks" ? tasks : tasks.filter((t) => t.status === active);
-
-  daytasks.forEach((task) => console.log(task.status));
 
   return (
     <div className="w-full custom-height bg-black text-white px-4 py-4 mt-16">
@@ -116,7 +115,7 @@ export default function Page() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Enter a task..."
+          placeholder="Enter a daily task..."
           className="flex-1 px-4 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none"
         />
         <button
@@ -125,79 +124,56 @@ export default function Page() {
         >
           <Plus size={18} />
           {editingTaskId ? "Update" : "Add"}
-          
         </button>
       </div>
 
-      {/* Task List */}
+      {/* Daily Task List */}
       <div className="grid gap-3">
         {filteredTasks.map((task) => (
-          <div
-            key={task.id}
-            className="bg-gray-800 p-4 rounded-md shadow flex justify-between items-center"
-          >
-            <div className="flex items-start gap-3">
-              <select
-                value={task.status}
-                onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                className="bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none"
-              >
-                <option>Pending</option>
-                <option>In Progress</option>
-                <option>Completed</option>
-              </select>
-              <div>
-                <h3 className="text-lg font-semibold">{task.title}</h3>
-                <p className="text-sm text-gray-400">{task.status}</p>
+          <div key={task.id} className="bg-gray-800 p-4 rounded-md shadow">
+            {/* Task Title */}
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">{task.title}</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEdit(task.id, task.title)}
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                  <Pencil size={18} />
+                </button>
+                <button
+                  onClick={() => handleDelete(task.id)}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  <Trash2 size={18} />
+                </button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEdit(task.id, task.title)}
-                className="text-blue-400 hover:text-blue-300"
-              >
-                <Pencil size={18} />
-              </button>
-              <button
-                onClick={() => handleDelete(task.id)}
-                className="text-red-400 hover:text-red-300"
-              >
-                <Trash2 size={18} />
-              </button>
+
+            {/* Status small circular checkboxes */}
+            <div className="mt-2 flex gap-4 flex-wrap">
+              {statuses.map((status) => (
+                <label
+                  key={status}
+                  className="flex items-center gap-2 text-sm cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name={`status-${task.id}`}
+                    checked={task.status === status}
+                    onChange={() => handleStatusChange(task.id, status)}
+                    className="w-3 h-3 rounded-full accent-blue-600"
+                  />
+                  {status}
+                </label>
+              ))}
             </div>
           </div>
         ))}
-        {daytasks.map((task) => (
-          <div
-            key={task.id}
-            className="bg-gray-800 p-4 rounded-md shadow flex justify-between items-center"
-          >
-            <div className="flex items-start gap-3">
-              <select
-                value={task.status}
-                onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                className="bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none"
-              >
-                <option>Scheduled</option>
-              </select>
-              <div>
-                <h3 className="text-lg font-semibold">{task.title}</h3>
-                <p className="text-sm text-gray-400">{task.status}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handlDelete(task.id)}
-                className="text-red-400 hover:text-red-300"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          </div>
-        ))}
-        {filteredTasks.length === 0 && daytasks.length === 0 && (
+
+        {filteredTasks.length === 0 && (
           <p className="text-center text-gray-500 mt-4">
-            No tasks in "{active}"
+            No daily tasks in "{active}"
           </p>
         )}
       </div>
