@@ -66,12 +66,14 @@ export const SparklesCore = ({
             interactivity: {
               events: {
                 onClick: { enable: true, mode: "push" },
-                resize: true,
+                onHover: { enable: false },
+                resize: { enable: true }, // ✅ fixed
               },
               modes: {
                 push: { quantity: 4 },
               },
             },
+
             particles: {
               color: {
                 value: particleColor,
