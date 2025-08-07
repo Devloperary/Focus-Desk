@@ -5,8 +5,10 @@ export default function RadialPomodoroClock({ pomodoroMinutes, isPaused }) {
   const totalSeconds = pomodoroMinutes * 60;
   const [timeLeft, setTimeLeft] = useState(totalSeconds);
   const intervalRef = useRef(null);
+  const radius = 90;
+  const circumference = 2 * Math.PI * radius;
 
-  // Start/Stop timer based on pause state
+  // Timer logic
   useEffect(() => {
     if (!isPaused && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
@@ -18,66 +20,73 @@ export default function RadialPomodoroClock({ pomodoroMinutes, isPaused }) {
     return () => clearInterval(intervalRef.current);
   }, [isPaused]);
 
-  // Auto clear when finished
+  // Clear when time ends
   useEffect(() => {
     if (timeLeft === 0) {
       clearInterval(intervalRef.current);
     }
   }, [timeLeft]);
 
+  // Time Formatter
   const formatTime = () => {
     const min = Math.floor(timeLeft / 60);
     const sec = timeLeft % 60;
     return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   };
 
-  const progressPercent = ((totalSeconds - timeLeft) / totalSeconds) * 100;
+  const progress = ((totalSeconds - timeLeft) / totalSeconds) * circumference;
 
   return (
-    <div className="relative w-[500px] h-[500px] flex items-center justify-center">
-      {/* Outer glowing ring */}
-      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/30 to-purple-600/30 blur-3xl"></div>
+    <div className="relative w-full aspect-square max-w-[400px] mx-auto">
+      {/* Glow effect */}
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/30 to-purple-600/30 blur-3xl z-0" />
 
-      {/* SVG circular progress */}
-      <svg className="absolute w-full h-full -rotate-90">
+      {/* SVG Circle */}
+      <svg viewBox="0 0 200 200" className="absolute w-full h-full -rotate-90 z-10">
+        {/* Background Circle */}
         <circle
-          cx="50%"
-          cy="50%"
-          r="220"
+          cx="100"
+          cy="100"
+          r={radius}
           stroke="rgba(255,255,255,0.1)"
-          strokeWidth="20"
+          strokeWidth="12"
           fill="none"
         />
+
+        {/* Progress Circle */}
         <circle
-          cx="50%"
-          cy="50%"
-          r="220"
+          cx="100"
+          cy="100"
+          r={radius}
           stroke="url(#gradient)"
-          strokeWidth="20"
-          strokeLinecap="round"
+          strokeWidth="12"
           fill="none"
-          strokeDasharray={2 * Math.PI * 220}
-          strokeDashoffset={
-            2 * Math.PI * 220 - (progressPercent / 100) * 2 * Math.PI * 220
-          }
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference - progress}
           className="transition-all duration-1000 ease-linear"
         />
+
+        {/* Gradient definition */}
         <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id="gradient" x1="0" y1="0" x2="200" y2="0">
             <stop offset="0%" stopColor="#3b82f6" />
             <stop offset="100%" stopColor="#9333ea" />
           </linearGradient>
         </defs>
       </svg>
 
-      {/* Center display */}
-      <div className={`absolute flex flex-col items-center justify-center w-48 h-48 rounded-full 
-        backdrop-blur-lg bg-white/10 border border-white/20 shadow-xl 
-        ${timeLeft < 30 ? "animate-pulse" : ""}`}>
-        <span className="text-6xl font-bold text-white drop-shadow-lg">
+      {/* Center Time Display */}
+      <div
+        className={`absolute inset-0 z-20 flex flex-col items-center justify-center 
+          rounded-full backdrop-blur-lg bg-white/10 border border-white/20 
+          shadow-2xl text-white transition-all duration-300 
+          ${timeLeft < 30 ? "animate-pulse" : ""}`}
+      >
+        <span className="text-4xl sm:text-5xl font-bold drop-shadow-lg">
           {formatTime()}
         </span>
-        <span className="text-sm text-gray-300 tracking-wide mt-2">
+        <span className="text-xs sm:text-sm text-gray-300 mt-2 tracking-wide">
           Pomodoro
         </span>
       </div>

@@ -24,13 +24,13 @@ function Page() {
   };
 
   return (
-    <div className="bg-black min-h-screen flex justify-center items-center gap-10">
+    <div className="bg-black min-h-screen flex items-center justify-center px-4 py-8 mt-16 sm:px-8 sm:py-12">
       {!showClock ? (
-        <div className="w-[400px] h-[400px] flex flex-col items-center bg-gray-700 text-white font-bold justify-evenly p-4 border border-gray-500 rounded-3xl shadow-2xl">
-          <div className="text-2xl">🍅 Set Your Pomodoro</div>
+        <div className="w-full max-w-md flex flex-col items-center bg-gray-700 text-white font-bold justify-evenly p-6 border border-gray-500 rounded-3xl shadow-2xl gap-6">
+          <div className="text-2xl text-center">🍅 Set Your Pomodoro</div>
           <input
             type="number"
-            className="w-full p-4 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full p-3 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="Enter minutes"
             value={pomodoroTime}
             onChange={(e) => setPomodoroTime(Number(e.target.value))}
@@ -41,7 +41,7 @@ function Page() {
           >
             Start Timer
           </button>
-          <div className="w-full flex justify-around h-15 items-center mt-4">
+          <div className="w-full flex justify-around items-center">
             {[25, 30, 40].map((time) => (
               <div
                 key={time}
@@ -54,17 +54,19 @@ function Page() {
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-12">
-          {/* Clock */}
-          <RadialPomodoroClock
-            pomodoroMinutes={pomodoroTime}
-            isPaused={isPaused}
-          />
+        <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 w-full max-w-6xl">
+          {/* Radial Clock */}
+          <div className="w-[250px] sm:w-[300px] md:w-[350px] lg:w-[400px] aspect-square">
+            <RadialPomodoroClock
+              pomodoroMinutes={pomodoroTime}
+              isPaused={isPaused}
+            />
+          </div>
 
           {/* Control Panel */}
-          <div className="flex flex-col items-center gap-6 w-[200px] h-[300px] rounded-2xl backdrop-blur-md bg-white/10 border border-white/20 p-6 shadow-xl">
-            <h3 className="text-white text-xl mb-4">Controls</h3>
-            
+          <div className="flex flex-col items-center gap-6 w-full max-w-[220px] rounded-2xl backdrop-blur-md bg-white/10 border border-white/20 p-6 shadow-xl">
+            <h3 className="text-white text-xl text-center">Controls</h3>
+
             {/* Pause / Play */}
             <button
               onClick={() => setIsPaused((prev) => !prev)}
