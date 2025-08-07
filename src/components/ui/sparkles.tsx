@@ -2,10 +2,12 @@
 
 import React, { useEffect, useId, useState } from "react";
 import Particles from "@tsparticles/react";
+import { initParticlesEngine } from "@tsparticles/react";
 import type { Container } from "@tsparticles/engine";
 import { loadSlim } from "@tsparticles/slim";
 import { motion, useAnimation } from "framer-motion";
 import { cn } from "@/lib/utils";
+
 
 type ParticlesProps = {
   id?: string;
@@ -36,17 +38,12 @@ export const SparklesCore = ({
   useEffect(() => {
     initParticlesEngine(async (engine) => {
       await loadSlim(engine);
-    }).then(() => {
-      setInit(true);
-    });
+    }).then(() => setInit(true));
   }, []);
 
   const particlesLoaded = async (container?: Container) => {
     if (container) {
-      controls.start({
-        opacity: 1,
-        transition: { duration: 1 },
-      });
+      controls.start({ opacity: 1, transition: { duration: 1 } });
     }
   };
 
@@ -69,7 +66,6 @@ export const SparklesCore = ({
             interactivity: {
               events: {
                 onClick: { enable: true, mode: "push" },
-                onHover: { enable: false },
                 resize: true,
               },
               modes: {
@@ -83,13 +79,8 @@ export const SparklesCore = ({
               move: {
                 enable: true,
                 direction: "none",
-                speed: {
-                  min: 0.1,
-                  max: 1,
-                },
-                outModes: {
-                  default: "out",
-                },
+                speed: { min: 0.1, max: 1 },
+                outModes: { default: "out" },
               },
               number: {
                 density: {
@@ -104,8 +95,8 @@ export const SparklesCore = ({
                 animation: {
                   enable: true,
                   speed: speed,
-                  sync: false,
                   startValue: "random",
+                  sync: false,
                 },
               },
               shape: {
