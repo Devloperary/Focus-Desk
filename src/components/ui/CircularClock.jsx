@@ -1,12 +1,19 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
 
-export default function RadialPomodoroClock({ pomodoroMinutes, isPaused }) {
+import { useState, useRef, useEffect } from "react";
+
+
+export default function RadialPomodoroClock({ pomodoroMinutes, isPaused, onTimeUp }) {
   const totalSeconds = pomodoroMinutes * 60;
   const [timeLeft, setTimeLeft] = useState(totalSeconds);
   const intervalRef = useRef(null);
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
+
+  // Reset when pomodoroMinutes changes
+  useEffect(() => {
+    setTimeLeft(totalSeconds);
+  }, [pomodoroMinutes]);
 
   // Timer logic
   useEffect(() => {
@@ -18,14 +25,15 @@ export default function RadialPomodoroClock({ pomodoroMinutes, isPaused }) {
       clearInterval(intervalRef.current);
     }
     return () => clearInterval(intervalRef.current);
-  }, [isPaused]);
+  }, [isPaused, timeLeft]);
 
-  // Clear when time ends
+  // When timer ends
   useEffect(() => {
     if (timeLeft === 0) {
       clearInterval(intervalRef.current);
+      if (onTimeUp) onTimeUp(); // 🔔 Tell parent to start beep
     }
-  }, [timeLeft]);
+  }, [timeLeft, onTimeUp]);
 
   // Time Formatter
   const formatTime = () => {
@@ -43,7 +51,6 @@ export default function RadialPomodoroClock({ pomodoroMinutes, isPaused }) {
 
       {/* SVG Circle */}
       <svg viewBox="0 0 200 200" className="absolute w-full h-full -rotate-90 z-10">
-        {/* Background Circle */}
         <circle
           cx="100"
           cy="100"
@@ -52,8 +59,6 @@ export default function RadialPomodoroClock({ pomodoroMinutes, isPaused }) {
           strokeWidth="12"
           fill="none"
         />
-
-        {/* Progress Circle */}
         <circle
           cx="100"
           cy="100"
@@ -66,8 +71,6 @@ export default function RadialPomodoroClock({ pomodoroMinutes, isPaused }) {
           strokeDashoffset={circumference - progress}
           className="transition-all duration-1000 ease-linear"
         />
-
-        {/* Gradient definition */}
         <defs>
           <linearGradient id="gradient" x1="0" y1="0" x2="200" y2="0">
             <stop offset="0%" stopColor="#3b82f6" />
