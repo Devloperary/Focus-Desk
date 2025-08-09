@@ -65,7 +65,7 @@ function Navbar() {
           </div>
           {/* GitHub Icon */}
           <Link
-            href="https://github.com"
+            href="https://github.com/Devloperary/Focus-Desk"
             target="_blank"
             rel="noopener noreferrer"
           >
