@@ -6,6 +6,36 @@
   font-style: normal;
 }
 
+/* Desktop default */
+.menu-toggle {
+  display: none;
+}
+
+.menu {
+  display: flex;
+  gap: 20px;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block; /* Show toggle button */
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .menu {
+    display: none; /* Hide menu by default on mobile */
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .menu.show {
+    display: flex; /* Show menu when toggle clicked */
+  }
+}
 
 /* Hide scrollbar (optional) */
 .scrollbar-hide::-webkit-scrollbar {

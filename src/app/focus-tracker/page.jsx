@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import RadialPomodoroClock from "@/components/ui/CircularClock";
-import { Pause, Play, RotateCcw } from "lucide-react";
+import { Pause, Play, RotateCcw, ArrowRight, ArrowLeft } from "lucide-react";
 import "@/app/globals.css";
 
 function Page() {
@@ -9,7 +9,8 @@ function Page() {
   const [pomodoroTime, setPomodoroTime] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isBeeping, setIsBeeping] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false); // NEW
+  const [hasStarted, setHasStarted] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const tickRef = useRef(null);
   const beepRef = useRef(null);
@@ -17,7 +18,7 @@ function Page() {
   // Play ticking sound when timer runs
   useEffect(() => {
     if (showClock && !isPaused && !isBeeping && hasStarted) {
-      tickRef.current?.play().catch(() => { });
+      tickRef.current?.play().catch(() => {});
     } else {
       tickRef.current?.pause();
     }
@@ -30,9 +31,8 @@ function Page() {
       setIsBeeping(false);
       setHasStarted(true);
 
-      // ✅ Play ticking sound on user click
       tickRef.current.currentTime = 0;
-      tickRef.current.play().catch(() => { });
+      tickRef.current.play().catch(() => {});
     } else {
       setShowClock(true);
       setHasStarted(false);
@@ -42,15 +42,14 @@ function Page() {
   const togglePause = () => {
     setIsPaused((prev) => {
       const next = !prev;
-      if (!next) { // unpausing
-        tickRef.current.play().catch(() => { });
-      } else { // pausing
+      if (!next) {
+        tickRef.current.play().catch(() => {});
+      } else {
         tickRef.current.pause();
       }
       return next;
     });
   };
-
 
   const handleReset = () => {
     setShowClock(false);
@@ -64,12 +63,12 @@ function Page() {
   };
 
   const handleTimeUp = () => {
-    if (!hasStarted || pomodoroTime <= 0) return; // PREVENT constant beep
+    if (!hasStarted || pomodoroTime <= 0) return;
     setIsBeeping(true);
-    setHasStarted(false); // stop marking it as running
+    setHasStarted(false);
     tickRef.current?.pause();
     beepRef.current.loop = true;
-    beepRef.current?.play().catch(() => { });
+    beepRef.current?.play().catch(() => {});
   };
 
   const stopBeep = () => {
@@ -79,10 +78,24 @@ function Page() {
   };
 
   return (
-    <div className="bg-black min-h-screen flex sm:flex-row flex-col items-center justify-center px-4 py-8 mt-16 sm:px-8 sm:py-12 gap-12">
+    <div className="bg-black min-h-screen flex sm:flex-row flex-col items-center justify-center px-4 py-8 mt-16 sm:px-8 sm:py-12 gap-12 relative">
+      {/* Mobile toggle button */}
+      <button
+        className="absolute top-4 left-4 sm:hidden p-2 bg-gray-800 text-white rounded-full z-50"
+        onClick={() => setMenuOpen(!menuOpen)}
+      >
+        {menuOpen ? <ArrowLeft size={24} /> : <ArrowRight size={24} />}
+      </button>
 
-      {/* Pomodoro setup */}
-      <div className="w-full max-w-md flex flex-col items-center bg-gray-700 text-white font-bold justify-evenly p-6 border border-gray-500 rounded-3xl shadow-2xl gap-6">
+      {/* Pomodoro setup (toggleable in mobile, always visible in desktop) */}
+      <div
+        className={`
+          w-full max-w-md flex-col items-center bg-gray-700 text-white font-bold justify-evenly p-6 border border-gray-500 rounded-3xl shadow-2xl gap-6
+          transform transition-all duration-300 ease-in-out
+          ${menuOpen ? "translate-y-0 opacity-100 flex" : "-translate-y-5 opacity-0 hidden"}
+          sm:translate-y-0 sm:opacity-100 sm:flex
+        `}
+      >
         <div className="text-2xl text-center pacifico-regular">Set Your Pomodoro</div>
         <input
           type="number"
@@ -112,12 +125,9 @@ function Page() {
 
       {/* Timer + Controls */}
       <div className="flex flex-col items-center justify-center gap-8 md:gap-16 w-full max-w-6xl">
-
-        {/* Audio elements */}
         <audio ref={tickRef} src="/sounds/clock-ticking.wav" preload="auto" loop />
         <audio ref={beepRef} src="/sounds/beep.wav" preload="auto" />
 
-        {/* Clock (always visible) */}
         <div className="w-[250px] sm:w-[300px] md:w-[350px] lg:w-[400px] aspect-square">
           <RadialPomodoroClock
             pomodoroMinutes={pomodoroTime}
@@ -126,8 +136,7 @@ function Page() {
           />
         </div>
 
-        {/* Controls */}
-        { showClock && (
+        {showClock && (
           <div className="flex flex-col items-center gap-4">
             <div className="flex gap-4">
               <button
