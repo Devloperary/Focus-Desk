@@ -79,7 +79,7 @@ function Page() {
   };
 
   return (
-    <div className="bg-black min-h-screen flex flex items-center justify-center px-4 py-8 mt-16 sm:px-8 sm:py-12 gap-12">
+    <div className="bg-black min-h-screen flex sm:flex-row flex-col items-center justify-center px-4 py-8 mt-16 sm:px-8 sm:py-12 gap-12">
 
       {/* Pomodoro setup */}
       <div className="w-full max-w-md flex flex-col items-center bg-gray-700 text-white font-bold justify-evenly p-6 border border-gray-500 rounded-3xl shadow-2xl gap-6">
