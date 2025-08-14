@@ -1,8 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-const isProtectedRoute = createRouteMatcher(['/forum(.*)','/focus-tracker(.*)','/goal-tracker(.*)'])
-// Removed task-manager and date-tracker from protected routes
-// const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/forum(.*)'])
+const isProtectedRoute = createRouteMatcher(['/forum(.*)','/focus-tracker(.*)','/goal-tracker(.*)','/task-manager(.*)','/date-tracker(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) await auth.protect()
