@@ -1,71 +1,61 @@
-import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongo";
-import { v4 as uuidv4 } from "uuid";
+import clientPromise from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
+// Removed Clerk auth as requested
 
-/* ✅ GET Daily Tasks */
-export async function GET(request) {
-  try {
-    const client = await clientPromise;
-    const db = client.db("task-manager");
-    const date = request.nextUrl.searchParams.get("date");
+export async function GET(req) {
+  // Removed Clerk auth check
 
-    const query = date ? { date } : {};
-    const tasks = await db.collection("dailyTasks").find(query).toArray();
+  const { searchParams } = new URL(req.url);
+  const date = searchParams.get("date"); // YYYY-MM-DD
 
-    return NextResponse.json(tasks);
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const client = await clientPromise;
+  const db = client.db("tasksdb");
+
+  const query = {};
+  if (date) query.date = date;
+
+  const tasks = await db.collection("tasks").find(query).toArray();
+  return Response.json(tasks);
 }
 
-/* ✅ POST (Add or Update) Daily Task */
-export async function POST(request) {
-  try {
-    const client = await clientPromise;
-    const db = client.db("task-manager");
-    const body = await request.json();
+export async function POST(req) {
+  // Removed Clerk auth check
 
-    const { id, title, date, status = "Scheduled" } = body;
+  const body = await req.json();
+  const client = await clientPromise;
+  const db = client.db("tasksdb");
 
-    if (id) {
-      await db.collection("dailyTasks").updateOne(
-        { id },
-        { $set: { title, status } }
-      );
-    } else {
-      await db.collection("dailyTasks").insertOne({
-        id: uuidv4(),
-        title,
-        status,
-        date,
-      });
-    }
-
-    return NextResponse.json({ message: "Success" });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (body.id) {
+    await db.collection("tasks").updateOne(
+      { _id: new ObjectId(body.id) },
+      { $set: { title: body.title, status: body.status, date: body.date } }
+    );
+    return Response.json({ message: "Daily task updated" });
   }
+
+  const newTask = {
+    title: body.title,
+    status: body.status || "Scheduled",
+    date: body.date, // store the date
+    createdAt: new Date(),
+  };
+
+  const result = await db.collection("tasks").insertOne(newTask);
+  return Response.json({ _id: result.insertedId, ...newTask });
 }
 
-/* ✅ DELETE Daily Task */
-export async function DELETE(request) {
-  try {
-    const client = await clientPromise;
-    const db = client.db("task-manager");
-    const id = request.nextUrl.searchParams.get("id");
+export async function DELETE(req) {
+  // Removed Clerk auth check
 
-    if (!id) {
-      return NextResponse.json({ error: "Task ID is required" }, { status: 400 });
-    }
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
 
-    const result = await db.collection("dailyTasks").deleteOne({ id });
+  if (!id) return Response.json({ error: "Task ID required" }, { status: 400 });
 
-    if (result.deletedCount === 0) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
-    }
+  const client = await clientPromise;
+  const db = client.db("tasksdb");
 
-    return NextResponse.json({ message: "Daily task deleted successfully" });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  await db.collection("tasks").deleteOne({ _id: new ObjectId(id) });
+  return Response.json({ message: "Daily task deleted" });
+
 }

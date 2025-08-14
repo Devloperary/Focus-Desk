@@ -3,11 +3,21 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { IoSearchSharp, IoLogoGithub } from "react-icons/io5";
 import { Menu } from "lucide-react";
+import {
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+  useUser
+} from "@clerk/nextjs";
+import { LogIn } from "lucide-react";
 
 function Navbar() {
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showInput, setShowInput] = useState(false);
+  const { user } = useUser();
 
   const navLinks = [
     { label: "Task Manager", href: "/task-manager" },
@@ -40,29 +50,41 @@ function Navbar() {
 
         {/* Right-side Controls */}
         <div className="flex items-center gap-3">
-          {/* Search Button */}
+          <SignedOut>
+            <div className="flex gap-2 items-center">
+              {/* Logo */}
 
+              {/* Sign In Button */}
+              <SignInButton>
+                <button className="flex items-center justify-center rounded-full font-medium text-sm h-10 px-4 cursor-pointer transition-colors bg-transparent text-white dark:text-white hover:bg-white/10">
+                  Sign In
+                </button>
+              </SignInButton>
 
-
-          <div className="relative flex items-center">
-            <div
-              className={`bg-black border mr-1 border-white rounded-lg w-48 transition-all duration-300 ${showInput ? "block" : "hidden"
-                } md:block`}
-            >
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full py-0.5 pl-3 pr-10 rounded-md bg-black text-white border border-gray-700 focus:outline-none"
-              />
+              {/* Sign Up Button */}
+              <SignUpButton>
+                <button className="flex items-center justify-center rounded-full font-medium text-sm h-10 px-4 cursor-pointer transition-colors bg-white text-black dark:bg-white dark:text-black hover:bg-gray-200">
+                  Sign Up
+                </button>
+              </SignUpButton>
             </div>
-            <div
-              className="cursor-pointer"
-              onClick={() => setShowInput((prev) => !prev)}
-            >
-              <IoSearchSharp size={20} className="text-gray-400" />
-            </div>
+          </SignedOut>
 
-          </div>
+          <SignedIn>
+            <div className="h-10 flex gap-3 items-center">
+              {/* Logo */}
+
+              <UserButton afterSignOutUrl="/" />
+
+              <div className="flex flex-col text-sm leading-tight">
+                <span className="font-medium">{user?.username || user?.firstName || "User"}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-300">
+                  {user?.emailAddresses?.[0]?.emailAddress || "No Email"}
+                </span>
+              </div>
+            </div>
+          </SignedIn>
+
           {/* GitHub Icon */}
           <Link
             href="https://github.com/Devloperary/Focus-Desk"
@@ -80,23 +102,25 @@ function Navbar() {
             <Menu size={24} />
           </button>
         </div>
-      </div>
+      </div >
 
       {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="mt-4 flex flex-col gap-2 md:hidden">
-          {navLinks.map(({ label, href }) => (
-            <Link
-              key={label}
-              href={href}
-              className="hover:bg-[#7e7e7e] rounded-md px-3 py-2"
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
+      {
+        menuOpen && (
+          <div className="mt-4 flex flex-col gap-2 md:hidden">
+            {navLinks.map(({ label, href }) => (
+              <Link
+                key={label}
+                href={href}
+                className="hover:bg-[#7e7e7e] rounded-md px-3 py-2"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+        )
+      }
+    </div >
   );
 }
 

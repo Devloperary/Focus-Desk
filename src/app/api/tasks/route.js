@@ -1,63 +1,78 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Task from "@/models/Task";
+import clientPromise from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
+// Removed Clerk auth as requested
 
-// ✅ GET: Fetch tasks
-export async function GET(req) {
-  try {
-    await connectDB();
-
-    const { searchParams } = new URL(req.url);
-    const date = searchParams.get("date");
-    const status = searchParams.get("status");
-
-    const query = {};
-    if (date) query.date = date;
-    if (status) query.status = status;
-
-    const tasks = await Task.find(query).sort({ _id: -1 });
-    return NextResponse.json(tasks);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
-  }
+export async function GET() {
+  // Removed Clerk auth check
+  const client = await clientPromise;
+  const db = client.db("tasksdb");
+  // Get all tasks without filtering by userId
+  const tasks = await db.collection("tasks").find({}).toArray();
+  return NextResponse.json(tasks);
 }
 
-// ✅ POST: Add or Update Task
 export async function POST(req) {
-  try {
-    await connectDB();
-    const { id, title, status, date } = await req.json();
+  // Removed Clerk auth check
+  const body = await req.json();
+  const client = await clientPromise;
+  const db = client.db("tasksdb");
 
-    if (id) {
-      await Task.findByIdAndUpdate(id, { title, status, date });
-    } else {
-      await Task.create({ title, status, date });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Failed to save task" }, { status: 500 });
+  // Check if we're updating an existing task
+  if (body.id) {
+    await db.collection("tasks").updateOne(
+      { _id: new ObjectId(body.id) },
+      { $set: { 
+          title: body.title,
+          status: body.status || "Pending",
+          date: new Date().toDateString()
+        }
+      }
+    );
+    return NextResponse.json({ message: "Task updated" });
   }
+
+  // Otherwise create a new task
+  const result = await db.collection("tasks").insertOne({
+    title: body.title,
+    status: body.status || "Pending",
+    date: new Date().toDateString(),
+    createdAt: new Date(),
+  });
+
+  return NextResponse.json({ insertedId: result.insertedId });
 }
 
-// ✅ DELETE: Remove Task
 export async function DELETE(req) {
-  try {
-    await connectDB();
+  // Removed Clerk auth check
+  const id = new URL(req.url).searchParams.get("id");
+  const client = await clientPromise;
+  const db = client.db("tasksdb");
 
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+  await db.collection("tasks").deleteOne({
+    _id: new ObjectId(id)
+  });
 
-    if (!id) {
-      return NextResponse.json({ error: "Missing task ID" }, { status: 400 });
-    }
+  return NextResponse.json({ success: true });
+};
 
-    await Task.findByIdAndDelete(id);
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Failed to delete task" }, { status: 500 });
+// Add a PATCH method to update task status
+export async function PATCH(req) {
+  // Removed Clerk auth check
+  const body = await req.json();
+  const { id, status } = body;
+  
+  if (!id || !status) {
+    return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
   }
+
+  const client = await clientPromise;
+  const db = client.db("tasksdb");
+
+  await db.collection("tasks").updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { status } }
+  );
+
+  return NextResponse.json({ success: true });
 }

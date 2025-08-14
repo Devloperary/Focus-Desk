@@ -1,17 +1,18 @@
-import mongoose from "mongoose";
+import { MongoClient } from "mongodb";
 
-let isConnected = false;
+const uri = process.env.MONGODB_URI;
+if (!uri) throw new Error("Please add MONGODB_URI to .env.local");
 
-export const connectDB = async () => {
-  if (isConnected) return;
+let client = new MongoClient(uri, {});
+let clientPromise;
 
-  try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      dbName: "taskdb",
-    });
-    isConnected = true;
-    console.log("✅ MongoDB connected");
-  } catch (err) {
-    console.error("MongoDB connection error:", err);
+if (process.env.NODE_ENV === "development") {
+  if (!global._mongoClientPromise) {
+    global._mongoClientPromise = client.connect();
   }
-};
+  clientPromise = global._mongoClientPromise;
+} else {
+  clientPromise = client.connect();
+}
+
+export default clientPromise;
