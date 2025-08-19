@@ -76,7 +76,7 @@ function Navbar() {
 
               <UserButton afterSignOutUrl="/" />
 
-              <div className="flex flex-col text-sm leading-tight">
+              <div className="md:flex flex-col text-sm leading-tight sm: hidden">
                 <span className="font-medium">{user?.username || user?.firstName || "User"}</span>
                 <span className="text-xs text-gray-500 dark:text-gray-300">
                   {user?.emailAddresses?.[0]?.emailAddress || "No Email"}
